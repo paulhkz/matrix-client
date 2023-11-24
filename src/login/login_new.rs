@@ -192,14 +192,13 @@ async fn login_with_password(client: &Client) -> anyhow::Result<()> {
 
     Ok(())
 }
-
 /// Login with SSO.
 async fn login_with_sso(client: &Client, idp: Option<&IdentityProvider>) -> anyhow::Result<()> {
     println!("Logging in with SSO…");
 
     let mut login_builder = client.matrix_auth().login_sso(|url| async move {
-        // Usually we would want to use a library to open the URL in the browser, but
-        // let's keep it simple.
+        open::that(&url)?;
+
         println!("\nOpen this URL in your browser: {url}\n");
         println!("Waiting for login token…");
         Ok(())

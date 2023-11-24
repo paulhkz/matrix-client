@@ -1,8 +1,13 @@
-mod input_popup;
 mod login_new;
 pub mod persist_session;
 
-use crate::login::login_new::login_new;
+use crate::{
+    login::login_new::login_new,
+    ui_elements::{
+        info_popup::{info_popup, Type},
+        input_popup::input_popup,
+    },
+};
 use matrix_sdk::{
     self,
     config::SyncSettings,
@@ -14,10 +19,7 @@ use tokio::fs;
 
 use matrix_sdk::{ruma::api::client::filter::FilterDefinition, Error, LoopCtrl};
 
-use self::{
-    input_popup::show_popup,
-    persist_session::{restore_session, FullSession},
-};
+use self::persist_session::{restore_session, FullSession};
 
 /// Restoring a session with encryption without having a persisted store
 /// will break the encryption setup and the client will not be able to send or
@@ -27,6 +29,8 @@ use self::{
 /// file, the location is shown in the logs. Note that the database must be
 /// deleted too as it can't be reused.
 pub async fn login() -> anyhow::Result<()> {
+    info_popup(Type::Informaton, "Informaton", "body")?;
+    info_popup(Type::Error, "Error", "Now iagine the body is very big and doesnt fit into one Line. I really wonder whats gonna happen then since I only have percentages inputted and thus am not able to ")?;
     // The folder containing this example's data.
     let data_dir = dirs::data_dir()
         .expect("no data_dir directory found")
@@ -38,7 +42,7 @@ pub async fn login() -> anyhow::Result<()> {
         restore_session(&session_file).await?
     } else {
         let homeserver_url =
-            show_popup("Homeserver URL", "Please Input your homeserver URL here.")?;
+            input_popup("Homeserver URL", "Please Input your homeserver URL here.")?;
         (
             login_new(&data_dir, &session_file, homeserver_url).await?,
             None,

@@ -9,6 +9,8 @@ use ratatui::{prelude::*, widgets::*};
 use tui_input::backend::crossterm::EventHandler;
 use tui_input::Input;
 
+use super::centered_rect;
+
 struct App<'a> {
     header: &'a str,
     body: &'a str,
@@ -25,7 +27,7 @@ impl App<'_> {
     }
 }
 
-pub fn show_popup(header: &str, body: &str) -> anyhow::Result<String> {
+pub fn input_popup(header: &str, body: &str) -> anyhow::Result<String> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -54,7 +56,7 @@ pub fn show_popup(header: &str, body: &str) -> anyhow::Result<String> {
     }
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<String> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> anyhow::Result<String> {
     loop {
         terminal.draw(|f| ui(f, &app))?;
 
@@ -62,6 +64,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<S
             if key.kind == KeyEventKind::Press {
                 match key.code {
                     KeyCode::Enter => return Ok(app.msg.to_string()),
+                    KeyCode::Esc => return Err(anyhow::anyhow!("Exited.")),
                     _ => {
                         app.msg.handle_event(&Event::Key(key));
                     }
@@ -80,7 +83,7 @@ fn ui(f: &mut Frame, app: &App) {
 
     let mut body = app.body.split('\n').map(|msg| Line::from(msg)).collect();
     let mut text = vec![Line::from(vec![Span::styled(
-        "Press Enter to confirm.",
+        "Press Enter to confirm, Escape to quit.",
         Style::default().slow_blink().bold(),
     )])];
     text.append(&mut body);
@@ -91,36 +94,17 @@ fn ui(f: &mut Frame, app: &App) {
 
     f.render_widget(paragraph, chunks[0]);
 
-    let block = Block::default().title(app.header).borders(Borders::ALL);
+    let block = Block::default()
+        .title(app.header)
+        .title_style(Style::default().bold())
+        .borders(Borders::ALL)
+        .fg(Color::Yellow);
+
+    let input = Paragraph::new(app.msg.value()).block(Block::default().borders(Borders::ALL));
+
     let area = centered_rect(60, 20, size);
-
-    let input = Paragraph::new(app.msg.value())
-        .fg(Color::Yellow)
-        .block(Block::default().borders(Borders::ALL).title("Input"));
-
     f.set_cursor(area.x + ((app.msg.visual_cursor()) as u16 + 1), area.y + 1);
 
     f.render_widget(input, area);
     f.render_widget(block, area);
-}
-
-/// helper function to create a centered rect using up certain percentage of the available rect `r`
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
 }

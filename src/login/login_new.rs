@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    io::{self, Write},
-};
+use std::fmt;
 
 use anyhow::anyhow;
 use matrix_sdk::{
@@ -17,9 +14,13 @@ use std::path::Path;
 
 use tokio::fs;
 
-use crate::login::persist_session::{build_client, FullSession};
-
-use super::input_popup::show_popup;
+use crate::{
+    login::persist_session::{build_client, FullSession},
+    ui_elements::{
+        info_popup::{info_popup, Type},
+        input_popup::input_popup,
+    },
+};
 
 #[derive(Debug)]
 enum LoginChoice {
@@ -125,25 +126,27 @@ pub async fn login_new(
 
 /// Offer the given choices to the user and login with the selected option.
 async fn offer_choices_and_login(client: &Client, choices: Vec<LoginChoice>) -> anyhow::Result<()> {
-    let mut body = vec!["Several options are available to login with this homeserver:".into()];
-
     let choice = loop {
+        let mut body = vec!["Several options are available to login with this homeserver:".into()];
         for (idx, login_choice) in choices.iter().enumerate() {
             body.push(format!("{idx}) {login_choice}"));
         }
         let header = "Enter your choice:";
 
-        let choice_str = show_popup(header, body.join("\n").as_str())?;
-
+        let choice_str = input_popup(header, body.join("\n").as_str())?;
         match choice_str.trim().parse::<usize>() {
             Ok(choice) => {
                 if choice >= choices.len() {
-                    eprintln!("This is not a valid choice");
+                    info_popup(Type::Error, "Error", "This is not a valid choice")?;
                 } else {
                     break choice;
                 }
             }
-            Err(_) => eprintln!("This is not a valid choice. Try again.\n"),
+            Err(_) => info_popup(
+                Type::Error,
+                "Error",
+                "This is not a valid choice. Try again.",
+            )?,
         };
     };
 
@@ -154,24 +157,14 @@ async fn offer_choices_and_login(client: &Client, choices: Vec<LoginChoice>) -> 
 
 /// Login with a username and password.
 async fn login_with_password(client: &Client) -> anyhow::Result<()> {
-    println!("Logging in with username and password…");
+    let body = "Logging in with username and password…";
 
     loop {
-        print!("\nUsername: ");
-        io::stdout().flush().expect("Unable to write to stdout");
-        let mut username = String::new();
-        io::stdin()
-            .read_line(&mut username)
-            .expect("Unable to read user input");
-        username = username.trim().to_owned();
+        let header = "Username:";
+        let username = input_popup(header, body)?.trim().to_owned();
 
-        print!("Password: ");
-        io::stdout().flush().expect("Unable to write to stdout");
-        let mut password = String::new();
-        io::stdin()
-            .read_line(&mut password)
-            .expect("Unable to read user input");
-        password = password.trim().to_owned();
+        let header = "Password:";
+        let password = input_popup(header, body)?.trim().to_owned();
 
         match client
             .matrix_auth()
@@ -180,13 +173,14 @@ async fn login_with_password(client: &Client) -> anyhow::Result<()> {
             .await
         {
             Ok(_) => {
-                println!("Logged in as {username}");
+                info_popup(
+                    Type::Informaton,
+                    "Login successful!",
+                    format!("Logged in as {username}").as_str(),
+                )?;
                 break;
             }
-            Err(error) => {
-                println!("Error logging in: {error}");
-                println!("Please try again\n");
-            }
+            Err(_error) => info_popup(Type::Error, "Error", "Please try again.")?,
         }
     }
 

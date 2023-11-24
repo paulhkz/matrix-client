@@ -7,6 +7,8 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
+use crate::ui_elements::input_popup::input_popup;
+
 /// The data needed to re-build a client.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientSession {
@@ -69,10 +71,7 @@ pub async fn restore_session(session_file: &Path) -> anyhow::Result<(Client, Opt
 }
 
 /// Build a new client.
-pub async fn build_client(
-    data_dir: &Path,
-    homeserver: String,
-) -> anyhow::Result<(Client, ClientSession)> {
+pub async fn build_client(data_dir: &Path) -> anyhow::Result<(Client, ClientSession)> {
     let mut rng = thread_rng();
 
     // Generating a subfolder for the database is not mandatory, but it is useful if
@@ -94,6 +93,8 @@ pub async fn build_client(
 
     // We create a loop here so the user can retry if an error happens.
     loop {
+        let homeserver = input_popup("Homeserver URL", "Please Input your homeserver URL here.")?;
+
         println!("\nChecking homeserver…");
 
         match Client::builder()

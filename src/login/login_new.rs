@@ -56,12 +56,8 @@ impl fmt::Display for LoginChoice {
 }
 
 /// Log in to the given homeserver and sync.
-pub async fn login_new(
-    data_dir: &Path,
-    session_file: &Path,
-    homeserver: String,
-) -> anyhow::Result<Client> {
-    let (client, client_session) = build_client(data_dir, homeserver).await?;
+pub async fn login_new(data_dir: &Path, session_file: &Path) -> anyhow::Result<Client> {
+    let (client, client_session) = build_client(data_dir).await?;
 
     let matrix_auth = client.matrix_auth();
     // First, let's figure out what login types are supported by the homeserver.

@@ -1,13 +1,7 @@
 mod login_new;
 pub mod persist_session;
 
-use crate::{
-    login::login_new::login_new,
-    ui_elements::{
-        info_popup::{info_popup, Type},
-        input_popup::input_popup,
-    },
-};
+use crate::login::login_new::login_new;
 use matrix_sdk::{
     self,
     config::SyncSettings,
@@ -29,8 +23,9 @@ use self::persist_session::{restore_session, FullSession};
 /// file, the location is shown in the logs. Note that the database must be
 /// deleted too as it can't be reused.
 pub async fn login() -> anyhow::Result<()> {
-    info_popup(Type::Informaton, "Informaton", "body")?;
-    info_popup(Type::Error, "Error", "Now iagine the body is very big and doesnt fit into one Line. I really wonder whats gonna happen then since I only have percentages inputted and thus am not able to ")?;
+    // info_popup(Type::Informaton, "Informaton", "body")?;
+    // info_popup(Type::Error, "Error", "Now iagine the body is very big and doesnt fit into one Line. I really wonder whats gonna happen then since I only have percentages inputted and thus am not able to ")?;
+
     // The folder containing this example's data.
     let data_dir = dirs::data_dir()
         .expect("no data_dir directory found")
@@ -41,12 +36,7 @@ pub async fn login() -> anyhow::Result<()> {
     let (client, sync_token) = if session_file.exists() {
         restore_session(&session_file).await?
     } else {
-        let homeserver_url =
-            input_popup("Homeserver URL", "Please Input your homeserver URL here.")?;
-        (
-            login_new(&data_dir, &session_file, homeserver_url).await?,
-            None,
-        )
+        (login_new(&data_dir, &session_file).await?, None)
     };
 
     sync(client, sync_token, &session_file)

@@ -1,0 +1,19 @@
+[package]
+name = "matrix-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+dirs = "5.0.1"
+rand = "*"
+serde = "*"
+serde_json = "*"
+tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = "0.3.15"
+url = "2.5.0"
+# when copy-pasting this, please use a git dependency or make sure that you
+# have copied the example as it was at the time of the release you use.
+matrix-sdk = {version = "0.6.2", git = "https://github.com/matrix-org/matrix-rust-sdk.git", features = ["sso-login"] }

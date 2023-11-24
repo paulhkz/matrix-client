@@ -1,5 +1,6 @@
+mod input_popup;
 mod login_new;
-mod persist_session;
+pub mod persist_session;
 
 use crate::login::login_new::login_new;
 use matrix_sdk::{
@@ -13,19 +14,14 @@ use tokio::fs;
 
 use matrix_sdk::{ruma::api::client::filter::FilterDefinition, Error, LoopCtrl};
 
-use self::persist_session::{restore_session, FullSession};
+use self::{
+    input_popup::show_popup,
+    persist_session::{restore_session, FullSession},
+};
 
-/// A simple example to show how to persist a client's data to be able to
-/// restore it.
-///
 /// Restoring a session with encryption without having a persisted store
 /// will break the encryption setup and the client will not be able to send or
 /// receive encrypted messages, hence the need to persist the session.
-///
-/// To use this, just run `cargo run -p example-persist-session`, and everything
-/// is interactive after that. You might want to set the `RUST_LOG` environment
-/// variable to `warn` to reduce the noise in the logs. The program exits
-/// whenever an unexpected error occurs.
 ///
 /// To reset the login, simply delete the folder containing the session
 /// file, the location is shown in the logs. Note that the database must be
@@ -41,7 +37,12 @@ pub async fn login() -> anyhow::Result<()> {
     let (client, sync_token) = if session_file.exists() {
         restore_session(&session_file).await?
     } else {
-        (login_new(&data_dir, &session_file).await?, None)
+        let homeserver_url =
+            show_popup("Homeserver URL", "Please Input your homeserver URL here.")?;
+        (
+            login_new(&data_dir, &session_file, homeserver_url).await?,
+            None,
+        )
     };
 
     sync(client, sync_token, &session_file)

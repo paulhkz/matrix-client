@@ -1,5 +1,3 @@
-use std::io::{self, Write};
-
 use matrix_sdk::{self, Client};
 
 use std::path::{Path, PathBuf};
@@ -71,7 +69,10 @@ pub async fn restore_session(session_file: &Path) -> anyhow::Result<(Client, Opt
 }
 
 /// Build a new client.
-pub async fn build_client(data_dir: &Path) -> anyhow::Result<(Client, ClientSession)> {
+pub async fn build_client(
+    data_dir: &Path,
+    homeserver: String,
+) -> anyhow::Result<(Client, ClientSession)> {
     let mut rng = thread_rng();
 
     // Generating a subfolder for the database is not mandatory, but it is useful if
@@ -93,14 +94,6 @@ pub async fn build_client(data_dir: &Path) -> anyhow::Result<(Client, ClientSess
 
     // We create a loop here so the user can retry if an error happens.
     loop {
-        let mut homeserver = String::new();
-
-        print!("Homeserver URL: ");
-        io::stdout().flush().expect("Unable to write to stdout");
-        io::stdin()
-            .read_line(&mut homeserver)
-            .expect("Unable to read user input");
-
         println!("\nChecking homeserver…");
 
         match Client::builder()

@@ -13,14 +13,13 @@ use matrix_sdk::{
 /// The initial device name when logging in with a device for the first time.
 const INITIAL_DEVICE_DISPLAY_NAME: &str = "login client";
 
-// --------------------------------------------------------------
-// --------------------------------------------------------------
-// --------------------------------------------------------------
 use std::path::Path;
 
 use tokio::fs;
 
 use crate::login::persist_session::{build_client, FullSession};
+
+use super::input_popup::show_popup;
 
 #[derive(Debug)]
 enum LoginChoice {
@@ -56,8 +55,12 @@ impl fmt::Display for LoginChoice {
 }
 
 /// Log in to the given homeserver and sync.
-pub async fn login_new(data_dir: &Path, session_file: &Path) -> anyhow::Result<Client> {
-    let (client, client_session) = build_client(data_dir).await?;
+pub async fn login_new(
+    data_dir: &Path,
+    session_file: &Path,
+    homeserver: String,
+) -> anyhow::Result<Client> {
+    let (client, client_session) = build_client(data_dir, homeserver).await?;
 
     let matrix_auth = client.matrix_auth();
     // First, let's figure out what login types are supported by the homeserver.
@@ -122,19 +125,15 @@ pub async fn login_new(data_dir: &Path, session_file: &Path) -> anyhow::Result<C
 
 /// Offer the given choices to the user and login with the selected option.
 async fn offer_choices_and_login(client: &Client, choices: Vec<LoginChoice>) -> anyhow::Result<()> {
-    println!("Several options are available to login with this homeserver:\n");
+    let mut body = vec!["Several options are available to login with this homeserver:".into()];
 
     let choice = loop {
         for (idx, login_choice) in choices.iter().enumerate() {
-            println!("{idx}) {login_choice}");
+            body.push(format!("{idx}) {login_choice}"));
         }
+        let header = "Enter your choice:";
 
-        print!("\nEnter your choice: ");
-        io::stdout().flush().expect("Unable to write to stdout");
-        let mut choice_str = String::new();
-        io::stdin()
-            .read_line(&mut choice_str)
-            .expect("Unable to read user input");
+        let choice_str = show_popup(header, body.join("\n").as_str())?;
 
         match choice_str.trim().parse::<usize>() {
             Ok(choice) => {

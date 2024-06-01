@@ -131,3 +131,17 @@ pub async fn build_client(data_dir: &Path) -> anyhow::Result<(Client, ClientSess
         }
     }
 }
+
+/// Persist the sync token for a future session.
+/// Note that this is needed only when using `sync_once`. Other sync methods get
+/// the sync token from the store.
+pub async fn persist_sync_token(session_file: &Path, sync_token: String) -> anyhow::Result<()> {
+    let serialized_session = fs::read_to_string(session_file).await?;
+    let mut full_session: FullSession = serde_json::from_str(&serialized_session)?;
+
+    full_session.sync_token = Some(sync_token);
+    let serialized_session = serde_json::to_string(&full_session)?;
+    fs::write(session_file, serialized_session).await?;
+
+    Ok(())
+}

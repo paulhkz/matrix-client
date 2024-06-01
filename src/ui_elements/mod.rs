@@ -1,5 +1,6 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
+pub mod chat;
 pub mod info_popup;
 pub mod input_popup;
 

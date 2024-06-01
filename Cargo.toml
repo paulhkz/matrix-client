@@ -15,7 +15,9 @@ tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
 tracing-subscriber = "0.3.15"
 matrix-sdk = {version = "0.6.2", git = "https://github.com/matrix-org/matrix-rust-sdk.git", features = ["sso-login"] }
 open = "*"
+strum = { version = "0.26", features = ["derive"] }
+color-eyre = "0.6.3"
 
 crossterm = "*"
-ratatui = "*"
+ratatui = { git = "https://github.com/ratatui-org/ratatui.git", version = "0.26.2" }
 tui-input = "*"
